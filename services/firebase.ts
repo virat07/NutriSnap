@@ -1,18 +1,15 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import {
   initializeAuth,
   getReactNativePersistence,
+  signOut as firebaseSignOut,
 } from "firebase/auth/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { Auth } from "firebase/auth";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyDpDJtRrbE2fVHwKbyhnYU5nF5EvkBCBCE",
   authDomain: "nutrisnap-ead5d.firebaseapp.com",
@@ -26,7 +23,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// ✅ Lazy load auth AFTER app is initialized
+// Initialize Firebase Auth with React Native persistence (AsyncStorage)
 let firebaseAuth: Auth | undefined;
 
 export const getAuthInstance = () => {
@@ -38,5 +35,17 @@ export const getAuthInstance = () => {
   return firebaseAuth;
 };
 
+// Firebase Firestore and Storage instances
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+// Sign-out function
+export const signOutUser = async () => {
+  try {
+    const auth = getAuthInstance();
+    await firebaseSignOut(auth);
+    console.log("User signed out successfully");
+  } catch (error) {
+    console.error("Error signing out: ", error);
+  }
+};

@@ -44,7 +44,7 @@ export default function LoginScreen() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.replace("/home");
+      router.replace("/");
     } catch (err: any) {
       console.log("Login error:", err);
       setError("Login failed. Please check your credentials.");
