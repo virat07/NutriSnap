@@ -1,16 +1,11 @@
-import { useRouter } from "expo-router";
+// app/_layout.tsx
+import "expo-router/entry";
+import { Slot, useRouter } from "expo-router";
 import { useEffect } from "react";
-import { createDrawerNavigator } from "@react-navigation/drawer";
 import { onAuthStateChanged } from "firebase/auth";
-import { getAuthInstance, signOutUser } from "../services/firebase";
+import { getAuthInstance } from "../services/firebase";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import ProfileScreen from "./profile"; // Profile screen component
-import DashboardScreen from "./home"; // Dashboard screen component
-import Header from "./header"; // Import Header component
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context"; // SafeAreaContext
-import { Button } from "react-native";
-
-const Drawer = createDrawerNavigator();
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 export default function RootLayout() {
   const router = useRouter();
@@ -21,12 +16,11 @@ export default function RootLayout() {
 
       const unsubscribe = onAuthStateChanged(auth, (user) => {
         console.log("Auth state changed:", user ? "signed in" : "signed out");
-
         // If user is signed in, navigate to home (dashboard)
         if (user) {
-          router.replace("/"); // Home screen
+          router.replace("/(drawer)/home"); // Go to the Drawer layout
         } else {
-          router.replace("/login"); // Login screen
+          router.replace("/login"); // Redirect to login screen
         }
       });
 
@@ -44,44 +38,11 @@ export default function RootLayout() {
     };
   }, []);
 
-  const handleSignOut = async () => {
-    await signOutUser(); // Call the sign-out function
-    router.replace("/login"); // Redirect to login screen after sign-out
-  };
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <SafeAreaView style={{ flex: 1 }}>
-          <Drawer.Navigator
-            initialRouteName="Dashboard"
-            screenOptions={{
-              header: ({ navigation }) => <Header navigation={navigation} />,
-              drawerType: "front",
-              drawerStyle: {
-                width: 250,
-                backgroundColor: "#fff",
-              },
-            }}
-          >
-            <Drawer.Screen name="Dashboard" component={DashboardScreen} />
-            <Drawer.Screen name="My Profile" component={ProfileScreen} />
-
-            {/* Sign Out at the bottom of the Drawer */}
-            <Drawer.Screen
-              name="Sign Out"
-              component={() => null} // Don't need a screen, just for the button
-              options={{
-                drawerLabel: () => (
-                  <Button
-                    title="Sign Out"
-                    color="red"
-                    onPress={handleSignOut}
-                  />
-                ),
-              }}
-            />
-          </Drawer.Navigator>
+          <Slot />
         </SafeAreaView>
       </SafeAreaProvider>
     </GestureHandlerRootView>

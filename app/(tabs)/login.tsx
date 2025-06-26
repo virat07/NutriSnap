@@ -14,7 +14,7 @@ import {
   signInWithCredential,
   GoogleAuthProvider,
 } from "firebase/auth";
-import { getAuthInstance } from "../services/firebase";
+import { getAuthInstance } from "../../services/firebase";
 import { useRouter } from "expo-router";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
