@@ -13,6 +13,7 @@ import { Auth } from "firebase/auth";
 const firebaseConfig = {
   apiKey: "AIzaSyDpDJtRrbE2fVHwKbyhnYU5nF5EvkBCBCE",
   authDomain: "nutrisnap-ead5d.firebaseapp.com",
+  databaseURL: "https://nutrisnap-ead5d-default-rtdb.firebaseio.com",
   projectId: "nutrisnap-ead5d",
   storageBucket: "nutrisnap-ead5d.firebasestorage.app",
   messagingSenderId: "701312807135",
@@ -38,6 +39,7 @@ export const getAuthInstance = () => {
 // Firebase Firestore and Storage instances
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
 
 // Sign-out function
 export const signOutUser = async () => {
