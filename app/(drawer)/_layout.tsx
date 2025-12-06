@@ -1,10 +1,10 @@
 // app/(drawer)/_layout.tsx
 import React from "react";
 import { createDrawerNavigator } from "@react-navigation/drawer";
-import DashboardScreen from "./home"; // Your Dashboard screen
+import DashboardScreen from "./dashboard"; // Your Dashboard screen
 import ProfileScreen from "./profile"; // Your Profile screen
 import Header from "./header"; // Your custom header
-import SignOutButton from "./signout";
+import SignOutScreen from "./signout";
 
 const DrawerLayout = () => {
   const Drawer = createDrawerNavigator();
@@ -26,7 +26,7 @@ const DrawerLayout = () => {
       <Drawer.Screen name="My Profile" component={ProfileScreen} />
       <Drawer.Screen
         name="Sign Out"
-        component={SignOutButton}
+        component={SignOutScreen}
         options={{
           drawerItemStyle: {
             borderTopWidth: 1,

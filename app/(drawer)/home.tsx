@@ -11,16 +11,17 @@ import {
   ActivityIndicator,
   Modal,
 } from "react-native";
-import * as ImagePicker from 'expo-image-picker';
-import { analyzeFoodImage, NutrientAnalysis } from '../../services/openai';
-import { getAuthInstance, db } from '../../services/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
+import * as ImagePicker from "expo-image-picker";
+import { analyzeFoodImage, NutrientAnalysis } from "../../services/openai";
+import { getAuthInstance, db } from "../../services/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 export default function DashboardScreen() {
   const [image, setImage] = useState<any>(null);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
-  const [nutrientAnalysis, setNutrientAnalysis] = useState<NutrientAnalysis | null>(null);
+  const [nutrientAnalysis, setNutrientAnalysis] =
+    useState<NutrientAnalysis | null>(null);
   const [user, setUser] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   // Mock data for missing fields
@@ -31,53 +32,79 @@ export default function DashboardScreen() {
     carbs: 220,
     weight: 75,
     targetWeight: 70,
-    avatar: '',
+    avatar: "",
   } as Record<string, any>;
   const [mockFields, setMockFields] = useState<string[]>([]);
 
   useEffect(() => {
+    let isMounted = true;
     const auth = getAuthInstance();
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-        let userData = userDoc.exists() ? userDoc.data() : {};
-        // Fill missing fields with mock data and track which are mock
-        const missing: string[] = [];
-        const filledUser: any = { ...userData };
-        Object.keys(mockData).forEach((key) => {
-          if (!userData[key]) {
-            filledUser[key] = mockData[key];
-            missing.push(key);
-          }
-        });
-        // Avatar fallback
-        if (!filledUser.avatar) {
-          filledUser.avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(filledUser.name || 'User')}`;
+      if (firebaseUser && isMounted) {
+        const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+        let userData: Record<string, any> = {};
+
+        if (userDoc.exists()) {
+          userData = userDoc.data();
+        } else {
+          console.warn("No user doc found for UID:", firebaseUser.uid);
         }
+
+        const missing: string[] = [];
+        const filledUser: Record<string, any> = { ...userData };
+
+        if (mockData) {
+          Object.keys(mockData).forEach((key) => {
+            if (!userData[key]) {
+              filledUser[key] = mockData[key];
+              missing.push(key);
+            }
+          });
+        }
+
+        if (!filledUser.avatar) {
+          filledUser.avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+            filledUser.name || "User"
+          )}`;
+        }
+
         setUser(filledUser);
         setMockFields(missing);
       }
-      setLoadingProfile(false);
+
+      if (isMounted) setLoadingProfile(false);
     });
-    return () => unsubscribe();
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   if (loadingProfile) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#00b894" style={{ flex: 1, justifyContent: 'center' }} />
+        <ActivityIndicator
+          size="large"
+          color="#00b894"
+          style={{ flex: 1, justifyContent: "center" }}
+        />
       </SafeAreaView>
     );
   }
 
   const openCamera = async () => {
     console.log("open camera");
-    
+
     try {
       // Request camera permissions
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Camera permission is required to take photos');
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission needed",
+          "Camera permission is required to take photos"
+        );
         return;
       }
 
@@ -106,10 +133,10 @@ export default function DashboardScreen() {
 
   const confirmImage = async () => {
     if (!image) return;
-    
+
     setAnalyzing(true);
     setShowImagePreview(false);
-    
+
     try {
       console.log("Using OpenAI API...");
       const analysis = await analyzeFoodImage(image.uri);
@@ -117,7 +144,10 @@ export default function DashboardScreen() {
       console.log("Nutrient analysis:", analysis);
     } catch (error) {
       console.error("Analysis error:", error);
-      Alert.alert("Analysis Error", "Failed to analyze the food image. Please try again.");
+      Alert.alert(
+        "Analysis Error",
+        "Failed to analyze the food image. Please try again."
+      );
     } finally {
       setAnalyzing(false);
     }
@@ -137,22 +167,57 @@ export default function DashboardScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Image source={{ uri: user.avatar }} style={styles.avatar} />
-        <Text style={styles.welcome}>Welcome, {user.name || 'User'}{mockFields.includes('name') && <Text style={{ color: 'orange' }}> (mock)</Text>}</Text>
+        <Text style={styles.welcome}>
+          Welcome, {user.name || "User"}
+          {mockFields.includes("name") && (
+            <Text style={{ color: "orange" }}> (mock)</Text>
+          )}
+        </Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Health Stats</Text>
-          <Text style={styles.stat}>Calories: {user.calories} kcal{mockFields.includes('calories') && <Text style={{ color: 'orange' }}> (mock)</Text>}</Text>
-          <Text style={styles.stat}>Protein: {user.protein} g{mockFields.includes('protein') && <Text style={{ color: 'orange' }}> (mock)</Text>}</Text>
-          <Text style={styles.stat}>Fats: {user.fats} g{mockFields.includes('fats') && <Text style={{ color: 'orange' }}> (mock)</Text>}</Text>
-          <Text style={styles.stat}>Carbs: {user.carbs} g{mockFields.includes('carbs') && <Text style={{ color: 'orange' }}> (mock)</Text>}</Text>
+          <Text style={styles.stat}>
+            Calories: {user.calories} kcal
+            {mockFields.includes("calories") && (
+              <Text style={{ color: "orange" }}> (mock)</Text>
+            )}
+          </Text>
+          <Text style={styles.stat}>
+            Protein: {user.protein} g
+            {mockFields.includes("protein") && (
+              <Text style={{ color: "orange" }}> (mock)</Text>
+            )}
+          </Text>
+          <Text style={styles.stat}>
+            Fats: {user.fats} g
+            {mockFields.includes("fats") && (
+              <Text style={{ color: "orange" }}> (mock)</Text>
+            )}
+          </Text>
+          <Text style={styles.stat}>
+            Carbs: {user.carbs} g
+            {mockFields.includes("carbs") && (
+              <Text style={{ color: "orange" }}> (mock)</Text>
+            )}
+          </Text>
         </View>
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Progress</Text>
-          <Text style={styles.stat}>Current Weight: {user.weight} kg{mockFields.includes('weight') && <Text style={{ color: 'orange' }}> (mock)</Text>}</Text>
-          <Text style={styles.stat}>Target Weight: {user.targetWeight} kg{mockFields.includes('targetWeight') && <Text style={{ color: 'orange' }}> (mock)</Text>}</Text>
+          <Text style={styles.stat}>
+            Current Weight: {user.weight} kg
+            {mockFields.includes("weight") && (
+              <Text style={{ color: "orange" }}> (mock)</Text>
+            )}
+          </Text>
+          <Text style={styles.stat}>
+            Target Weight: {user.targetWeight} kg
+            {mockFields.includes("targetWeight") && (
+              <Text style={{ color: "orange" }}> (mock)</Text>
+            )}
+          </Text>
           {/* Here you can add a chart component for progress */}
         </View>
 
@@ -175,37 +240,39 @@ export default function DashboardScreen() {
         onRequestClose={() => setShowImagePreview(false)}
       >
         <View style={styles.modalOverlay}>
-                  <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Review Your Photo</Text>
-          {image && (
-            <Image source={{ uri: image.uri }} style={styles.previewImage} />
-          )}
-          
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Review Your Photo</Text>
+            {image && (
+              <Image source={{ uri: image.uri }} style={styles.previewImage} />
+            )}
 
-          
-          <View style={styles.modalButtons}>
-            <TouchableOpacity style={styles.retakeButton} onPress={retakePhoto}>
-              <Text style={styles.retakeButtonText}>Retake</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.confirmButton} onPress={confirmImage}>
-              <Text style={styles.confirmButtonText}>Analyze Food</Text>
-            </TouchableOpacity>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.retakeButton}
+                onPress={retakePhoto}
+              >
+                <Text style={styles.retakeButtonText}>Retake</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={confirmImage}
+              >
+                <Text style={styles.confirmButtonText}>Analyze Food</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
         </View>
       </Modal>
 
       {/* Analysis Loading Modal */}
-      <Modal
-        visible={analyzing}
-        animationType="fade"
-        transparent={true}
-      >
+      <Modal visible={analyzing} animationType="fade" transparent={true}>
         <View style={styles.modalOverlay}>
           <View style={styles.loadingContent}>
             <ActivityIndicator size="large" color="#00b894" />
             <Text style={styles.loadingText}>Analyzing your food...</Text>
-            <Text style={styles.loadingSubtext}>This may take a few seconds</Text>
+            <Text style={styles.loadingSubtext}>
+              This may take a few seconds
+            </Text>
           </View>
         </View>
       </Modal>
@@ -226,24 +293,32 @@ export default function DashboardScreen() {
                 <Text style={styles.confidenceText}>
                   Confidence: {Math.round(nutrientAnalysis.confidence * 100)}%
                 </Text>
-                
+
                 <View style={styles.nutrientSection}>
                   <Text style={styles.sectionTitle}>Macronutrients</Text>
                   <View style={styles.nutrientRow}>
                     <Text style={styles.nutrientLabel}>Calories:</Text>
-                    <Text style={styles.nutrientValue}>{nutrientAnalysis.calories} kcal</Text>
+                    <Text style={styles.nutrientValue}>
+                      {nutrientAnalysis.calories} kcal
+                    </Text>
                   </View>
                   <View style={styles.nutrientRow}>
                     <Text style={styles.nutrientLabel}>Protein:</Text>
-                    <Text style={styles.nutrientValue}>{nutrientAnalysis.protein}g</Text>
+                    <Text style={styles.nutrientValue}>
+                      {nutrientAnalysis.protein}g
+                    </Text>
                   </View>
                   <View style={styles.nutrientRow}>
                     <Text style={styles.nutrientLabel}>Carbs:</Text>
-                    <Text style={styles.nutrientValue}>{nutrientAnalysis.carbs}g</Text>
+                    <Text style={styles.nutrientValue}>
+                      {nutrientAnalysis.carbs}g
+                    </Text>
                   </View>
                   <View style={styles.nutrientRow}>
                     <Text style={styles.nutrientLabel}>Fats:</Text>
-                    <Text style={styles.nutrientValue}>{nutrientAnalysis.fats}g</Text>
+                    <Text style={styles.nutrientValue}>
+                      {nutrientAnalysis.fat}g
+                    </Text>
                   </View>
                 </View>
 
@@ -251,39 +326,54 @@ export default function DashboardScreen() {
                   <Text style={styles.sectionTitle}>Other Nutrients</Text>
                   <View style={styles.nutrientRow}>
                     <Text style={styles.nutrientLabel}>Fiber:</Text>
-                    <Text style={styles.nutrientValue}>{nutrientAnalysis.fiber}g</Text>
+                    <Text style={styles.nutrientValue}>
+                      {nutrientAnalysis.fiber}g
+                    </Text>
                   </View>
                   <View style={styles.nutrientRow}>
                     <Text style={styles.nutrientLabel}>Sugar:</Text>
-                    <Text style={styles.nutrientValue}>{nutrientAnalysis.sugar}g</Text>
+                    <Text style={styles.nutrientValue}>
+                      {nutrientAnalysis.sugar}g
+                    </Text>
                   </View>
                   <View style={styles.nutrientRow}>
                     <Text style={styles.nutrientLabel}>Sodium:</Text>
-                    <Text style={styles.nutrientValue}>{nutrientAnalysis.sodium}mg</Text>
+                    <Text style={styles.nutrientValue}>
+                      {nutrientAnalysis.sodium}mg
+                    </Text>
                   </View>
                 </View>
 
                 {nutrientAnalysis.vitamins.length > 0 && (
                   <View style={styles.nutrientSection}>
                     <Text style={styles.sectionTitle}>Vitamins</Text>
-                    <Text style={styles.nutrientList}>{nutrientAnalysis.vitamins.join(', ')}</Text>
+                    <Text style={styles.nutrientList}>
+                      {nutrientAnalysis.vitamins.join(", ")}
+                    </Text>
                   </View>
                 )}
 
                 {nutrientAnalysis.minerals.length > 0 && (
                   <View style={styles.nutrientSection}>
                     <Text style={styles.sectionTitle}>Minerals</Text>
-                    <Text style={styles.nutrientList}>{nutrientAnalysis.minerals.join(', ')}</Text>
+                    <Text style={styles.nutrientList}>
+                      {nutrientAnalysis.minerals.join(", ")}
+                    </Text>
                   </View>
                 )}
 
                 <View style={styles.nutrientSection}>
                   <Text style={styles.sectionTitle}>Serving Size</Text>
-                  <Text style={styles.servingSize}>{nutrientAnalysis.servingSize}</Text>
+                  <Text style={styles.servingSize}>
+                    {nutrientAnalysis.servingSize}
+                  </Text>
                 </View>
               </ScrollView>
             )}
-            <TouchableOpacity style={styles.closeButton} onPress={closeAnalysis}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={closeAnalysis}
+            >
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
           </View>
@@ -319,14 +409,17 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   card: {
-    backgroundColor: "white",
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 20,
-    shadowColor: "#000",
+    backgroundColor: 'white',
+    borderRadius: 14,
+    padding: 18,
+    marginBottom: 16,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#f1f3f5',
   },
   cardTitle: {
     fontSize: 18,
@@ -338,11 +431,16 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   button: {
-    backgroundColor: "#00b894",
-    padding: 15,
-    borderRadius: 5,
-    marginVertical: 10,
-    alignItems: "center",
+    backgroundColor: '#00b894',
+    padding: 16,
+    borderRadius: 12,
+    marginVertical: 8,
+    alignItems: 'center',
+    shadowColor: '#00b894',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buttonText: {
     color: "white",
@@ -352,23 +450,28 @@ const styles = StyleSheet.create({
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContent: {
     backgroundColor: 'white',
-    borderRadius: 15,
-    padding: 20,
+    borderRadius: 16,
+    padding: 24,
     margin: 20,
     alignItems: 'center',
     maxWidth: '90%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 5,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 15,
-    color: '#333',
+    color: "#333",
   },
   previewImage: {
     width: 250,
@@ -377,69 +480,74 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
   },
   retakeButton: {
-    backgroundColor: '#ff6b6b',
+    backgroundColor: "#ff6b6b",
     padding: 12,
     borderRadius: 8,
     flex: 1,
     marginRight: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   retakeButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   confirmButton: {
-    backgroundColor: '#00b894',
+    backgroundColor: "#00b894",
     padding: 12,
     borderRadius: 8,
     flex: 1,
     marginLeft: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   confirmButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   loadingContent: {
     backgroundColor: 'white',
-    borderRadius: 15,
-    padding: 30,
+    borderRadius: 16,
+    padding: 32,
     alignItems: 'center',
     margin: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 5,
   },
   loadingText: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginTop: 15,
-    color: '#333',
+    color: "#333",
   },
   loadingSubtext: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginTop: 5,
   },
   analysisContent: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 15,
     margin: 20,
-    maxHeight: '80%',
+    maxHeight: "80%",
     flex: 1,
   },
   analysisTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    color: '#333',
+    borderBottomColor: "#eee",
+    color: "#333",
   },
   analysisScroll: {
     flex: 1,
@@ -447,15 +555,15 @@ const styles = StyleSheet.create({
   },
   foodName: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#00b894',
-    textAlign: 'center',
+    fontWeight: "bold",
+    color: "#00b894",
+    textAlign: "center",
     marginBottom: 10,
   },
   confidenceText: {
     fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     marginBottom: 20,
   },
   nutrientSection: {
@@ -463,46 +571,46 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 10,
   },
   nutrientRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingVertical: 5,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   nutrientLabel: {
     fontSize: 16,
-    color: '#555',
+    color: "#555",
   },
   nutrientValue: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
   nutrientList: {
     fontSize: 16,
-    color: '#555',
+    color: "#555",
     lineHeight: 24,
   },
   servingSize: {
     fontSize: 16,
-    color: '#555',
-    fontStyle: 'italic',
+    color: "#555",
+    fontStyle: "italic",
   },
   closeButton: {
-    backgroundColor: '#00b894',
+    backgroundColor: "#00b894",
     padding: 15,
     margin: 20,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   closeButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
