@@ -1,26 +1,26 @@
 import { initializeApp } from "firebase/app";
-import { collection, query, where, getDocs, serverTimestamp, setDoc, doc } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import { collection, query, where, getDocs, serverTimestamp, setDoc, doc, getFirestore } from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytesResumable, getStorage } from "firebase/storage";
 import {
   initializeAuth,
   getReactNativePersistence,
   signOut as firebaseSignOut,
 } from "firebase/auth/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+
+
 import { Auth } from "firebase/auth";
 
 // Your web app's Firebase configuration
 export const firebaseConfig = {
-  apiKey: "AIzaSyDpDJtRrbE2fVHwKbyhnYU5nF5EvkBCBCE",
-  authDomain: "nutrisnap-ead5d.firebaseapp.com",
-  databaseURL: "https://nutrisnap-ead5d-default-rtdb.firebaseio.com",
-  projectId: "nutrisnap-ead5d",
-  storageBucket: "nutrisnap-ead5d.firebasestorage.app",
-  messagingSenderId: "701312807135",
-  appId: "1:701312807135:web:161094e92213eabcadf96a",
-  measurementId: "G-SPPMVR3XW5",
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase
